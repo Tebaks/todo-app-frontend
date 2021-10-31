@@ -1,0 +1,45 @@
+on:
+  push:
+    branches:
+      - main
+
+name: Test
+jobs:
+  test:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install Node
+        uses: actions/setup-node@v2
+      - name: Install Dependencies
+        run: npm install
+      - name: Run unit tests
+        run: |
+          npm run unit-test
+        env:
+          REACT_APP_API_URL: ${{ secrets.MOCK_SERVER_URL}}
+      - name: "Deploy to development environment"
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_app_name: ${{secrets.HEROKU_DEV_APP_NAME}}
+          heroku_email: ${{secrets.HEROKU_EMAIL}}
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          usedocker: true
+      - name: Sleep for 1 minute
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '1m'
+      - name: "Run acceptance tests"
+        run: |
+          npm run acceptance-test
+        env:
+          REACT_APP_API_URL: ${{ secrets.MOCK_SERVER_URL}}
+          REACT_APP_URL: ${{ secrets.APP_URL}}
+      - name: "Deploy to production environment"
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_app_name: ${{secrets.HEROKU_DEV_APP_NAME}}
+          heroku_email: ${{secrets.HEROKU_EMAIL}}
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          usedocker: true
